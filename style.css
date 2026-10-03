@@ -5,4 +5,64 @@
 }
 body {
     background-color: #b27de4;
+    font-family: system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 40px;
+    background-color: rgba(255, 255, 255, 0.15);
+    flex-wrap: wrap;
+}
+
+.header__title {
+    font-size: 28px;
+    color: #fff;
+}
+
+.header__stats {
+    display: flex;
+    gap: 24px;
+    font-size: 18px;
+    color: #fff;
+}
+
+.header__stat b {
+    font-size: 22px;
+}
+
+.header__buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.btn {
+    border: none;
+    border-radius: 100px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn--primary {
+    background-color: #fff;
+    color: #6a3fa0;
+}
+
+.btn--secondary {
+    background-color: transparent;
+    color: #fff;
+    border: 2px solid #fff;
 }
