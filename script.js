@@ -3,6 +3,7 @@
 const CONFIG = {
     pairs: 8,
     delay: 1000,
+    storageKey: 'memory-game-leaders',
 };
 
 const state = {
@@ -22,11 +23,14 @@ let headerEl;
 let movesEl;
 let matchesEl;
 let boardEl;
+let modalEl;
+let leadersListEl;
 
 function init () {
     createHeader();
     createBoard();
     startNewGame();
+    createModal();
 }
 
 // HEADER
@@ -74,21 +78,12 @@ function createHeader() {
     document.body.append(headerEl);
 }
 
-function startNewGame () {
-
-}
-
-function openLeaders () {
-
-}
-
 // MAIN SECTION
 
 function createBoard() {
     boardEl = document.createElement('main');
     boardEl.className = 'board';
     document.body.append(boardEl);
-    renderBoard();
 }
 
 function createDeck() {
@@ -253,5 +248,102 @@ function onWin() {
     }, 300);
 }
 
+// modal window
+
+function createModal() {
+    modalEl = document.createElement('div');
+    modalEl.className = 'modal';
+    modalEl.hidden = true;
+
+    const content = document.createElement('div');
+    content.className = 'modal__content';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'modal__close';
+    closeBtn.textContent = '×';
+    closeBtn.addEventListener('click', closeLeaders);
+
+    const title = document.createElement('h2');
+    title.className = 'modal__title';
+    title.textContent = 'Таблица лидеров';
+
+    leadersListEl = document.createElement('ol');
+    leadersListEl.className = 'modal__list';
+
+    content.append(closeBtn, title, leadersListEl);
+    modalEl.append(content);
+
+    modalEl.addEventListener('click', (e) => {
+        if (e.target === modalEl) closeLeaders();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modalEl.hidden) closeLeaders();
+    });
+
+    document.body.append(modalEl);
+}
+
+function openLeaders() {
+    renderLeaders();
+    modalEl.hidden = false;
+}
+
+function closeLeaders() {
+    modalEl.hidden = true;
+}
+
+function renderLeaders() {
+    const leaders = getLeaders();
+
+    leadersListEl.innerHTML = '';
+
+    if (leaders.length === 0) {
+        const empty = document.createElement('li');
+        empty.className = 'modal__empty';
+        empty.textContent = 'Пока нет результатов';
+        leadersListEl.append(empty);
+        return;
+    }
+
+    leaders.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.className = 'modal__item';
+        li.innerHTML = `
+            <span class="modal__rank">${index + 1}</span>
+            <span class="modal__moves">${item.moves} ходов</span>
+            <span class="modal__date">${formatDate(item.date)}</span>
+        `;
+        leadersListEl.append(li);
+    });
+}
+
+function getLeaders() {
+    try {
+        const raw = localStorage.getItem(CONFIG.storageKey);
+        return raw ? JSON.parse(raw) : [];
+    } catch {
+        return [];
+    }
+}
+
+function saveLeader(moves) {
+    const leaders = getLeaders();
+    leaders.push({ moves, date: Date.now() });
+
+    leaders.sort((a, b) => a.moves - b.moves);
+
+    const top = leaders.slice(0, 10);
+
+    localStorage.setItem(CONFIG.storageKey, JSON.stringify(top));
+}
+
+function formatDate(timestamp) {
+    return new Date(timestamp).toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+    });
+}
 
 init();
