@@ -7,6 +7,13 @@ const CONFIG = {
 
 const state = {
     cards: [],
+    firstCard: null,
+    secondCard: null,
+    lockBoard: false,
+    moves: 0,
+    matches: 0,
+    closeTimer: null,
+    gameActive: false,  
 };
 
 const IMAGES = ['./img/1.jpg', './img/2.jpg', './img/3.jpg', './img/4.jpg', './img/5.jpg', './img/6.jpg', './img/7.jpg', './img/8.jpg'];
@@ -124,12 +131,12 @@ function renderBoard() {
         const front = document.createElement('div');
         front.className = 'card__face card__face--front';
         front.innerHTML = `
-            <img src="./img/${card.icon}" alt="card-icon">
+            <img src="./${card.icon}" alt="card-icon">
         `;;
 
         inner.append(back, front);
         cardEl.append(inner);
-        // cardEl.addEventListener('click', () => onCardClick(index));
+        cardEl.addEventListener('click', () => onCardClick(index));
 
         boardEl.append(cardEl);
     });
@@ -138,10 +145,113 @@ function renderBoard() {
 //start game 
 function startNewGame() {
 
+    if (state.closeTimer) {
+        clearTimeout(state.closeTimer);
+        state.closeTimer = null;
+    }
+
+    state.firstCard = null;
+    state.secondCard = null;
+    state.lockBoard = false;
+    state.moves = 0;
+    state.matches = 0;
+    state.gameActive = true;
+
+     updateStats();
+
     state.cards = createDeck();
     shuffle(state.cards);
 
     renderBoard();
 }
+
+function onCardClick(index) {
+    const card = state.cards[index];
+
+    if (state.lockBoard) return;
+    if (card.flipped || card.matched) return;
+    if (state.firstCard === index) return;
+
+    card.flipped = true;
+    updateCardElement(index);
+
+    if (state.firstCard === null) {
+        state.firstCard = index;
+        return;
+    }
+
+    state.secondCard = index;
+    state.moves++;
+    updateStats();
+
+    checkMatch();
+}
+
+function checkMatch() {
+    const first = state.cards[state.firstCard];
+    const second = state.cards[state.secondCard];
+
+    if (first.id === second.id) {
+        first.matched = true;
+        second.matched = true;
+
+        updateCardElement(state.firstCard);
+        updateCardElement(state.secondCard);
+
+        state.matches++;
+        updateStats();
+
+        resetTurn();
+
+        if (state.matches === CONFIG.pairs) {
+            onWin();
+        }
+    } else {
+
+        state.lockBoard = true;
+
+        state.closeTimer = setTimeout(() => {
+            first.flipped = false;
+            second.flipped = false;
+
+            updateCardElement(state.firstCard);
+            updateCardElement(state.secondCard);
+
+            state.closeTimer = null;
+            resetTurn();
+        }, CONFIG.delay);
+    }
+}
+
+function updateCardElement(index) {
+    const card = state.cards[index];
+    const cardEl = boardEl.querySelector(`[data-index="${index}"]`);
+    if (!cardEl) return;
+
+    cardEl.classList.toggle('card--flipped', card.flipped);
+    cardEl.classList.toggle('card--matched', card.matched);
+}
+
+function updateStats() {
+    movesEl.innerHTML = `Ходы: <b>${state.moves}</b>`;
+    matchesEl.innerHTML = `Пары: <b>${state.matches}</b> / ${CONFIG.pairs}`;
+}
+
+function resetTurn() {
+    state.firstCard = null;
+    state.secondCard = null;
+    state.lockBoard = false;
+}
+
+function onWin() {
+    state.gameActive = false;
+
+    saveLeader(state.moves);
+
+    setTimeout(() => {
+        alert(`Победа! Вы нашли все пары за ${state.moves} ходов.`);
+    }, 300);
+}
+
 
 init();

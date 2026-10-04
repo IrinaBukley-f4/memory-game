@@ -122,8 +122,10 @@ body {
 .card__face--front {
     background-color: #fff;
     transform: rotateY(180deg);
+    overflow: hidden;
+    object-fit: center;
     img {
-        width: 100%;
+        height: 100%;
     }
 }
 
