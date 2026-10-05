@@ -71,8 +71,6 @@ body {
 .btn--secondary {
     background-color: transparent;
     color: #6a3fa0;
-    border: 1px solid #6a3fa0;
-    border-radius: 30px;
     border: 2px solid #fff;
 }
 
@@ -132,7 +130,6 @@ body {
     background-color: #fff;
     transform: rotateY(180deg);
     overflow: hidden;
-    object-fit: center;
     img {
         height: 100%;
     }
