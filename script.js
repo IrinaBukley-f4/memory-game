@@ -4,6 +4,7 @@ const CONFIG = {
     pairs: 8,
     delay: 1000,
     storageKey: 'memory-game-leaders',
+    maxLeaders: 10,
 };
 
 const state = {
@@ -17,20 +18,21 @@ const state = {
     gameActive: false,  
 };
 
-const IMAGES = ['./img/1.jpg', './img/2.jpg', './img/3.jpg', './img/4.jpg', './img/5.jpg', './img/6.jpg', './img/7.jpg', './img/8.jpg'];
+const IMAGES = ['1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg', '7.jpg', '8.jpg'];
 
 let headerEl;
 let movesEl;
 let matchesEl;
 let boardEl;
+
 let modalEl;
-let leadersListEl;
+let modalBodyEl;
 
 function init () {
     createHeader();
     createBoard();
-    startNewGame();
     createModal();
+    startNewGame();
 }
 
 // HEADER
@@ -126,7 +128,7 @@ function renderBoard() {
         const front = document.createElement('div');
         front.className = 'card__face card__face--front';
         front.innerHTML = `
-            <img src="./${card.icon}" alt="card-icon">
+            <img src="./img/${card.icon}" alt="card-icon">
         `;;
 
         inner.append(back, front);
@@ -158,6 +160,8 @@ function startNewGame() {
     shuffle(state.cards);
 
     renderBoard();
+
+    closeModal();
 }
 
 function onCardClick(index) {
@@ -243,9 +247,7 @@ function onWin() {
 
     saveLeader(state.moves);
 
-    setTimeout(() => {
-        alert(`Победа! Вы нашли все пары за ${state.moves} ходов.`);
-    }, 300);
+    openWinModal(state.moves);
 }
 
 // modal window
@@ -261,61 +263,120 @@ function createModal() {
     const closeBtn = document.createElement('button');
     closeBtn.className = 'modal__close';
     closeBtn.textContent = '×';
-    closeBtn.addEventListener('click', closeLeaders);
+    closeBtn.addEventListener('click', closeModal);
 
-    const title = document.createElement('h2');
-    title.className = 'modal__title';
-    title.textContent = 'Таблица лидеров';
+    modalBodyEl = document.createElement('div');
+    modalBodyEl.className = 'modal__body';
 
-    leadersListEl = document.createElement('ol');
-    leadersListEl.className = 'modal__list';
-
-    content.append(closeBtn, title, leadersListEl);
+    content.append(closeBtn, modalBodyEl);
     modalEl.append(content);
 
     modalEl.addEventListener('click', (e) => {
-        if (e.target === modalEl) closeLeaders();
+        if (e.target === modalEl) closeModal();
     });
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !modalEl.hidden) closeLeaders();
+        if (e.key === 'Escape' && !modalEl.hidden) closeModal();
     });
 
     document.body.append(modalEl);
 }
 
-function openLeaders() {
-    renderLeaders();
+function openModal(contentNode) {
+    modalBodyEl.innerHTML = '';
+    modalBodyEl.append(contentNode);
     modalEl.hidden = false;
+    document.body.classList.add('no-scroll');
 }
 
-function closeLeaders() {
+function closeModal() {
+    if (!modalEl) return;
     modalEl.hidden = true;
+    document.body.classList.remove('no-scroll');
 }
 
-function renderLeaders() {
-    const leaders = getLeaders();
+function openWinModal(moves) {
+    const content = buildWinContent(moves);
+    openModal(content);
+}
 
-    leadersListEl.innerHTML = '';
+function buildWinContent(moves) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'modal-win';
+
+    const title = document.createElement('h2');
+    title.className = 'modal__title';
+    title.textContent = 'Победа!';
+
+    const text = document.createElement('p');
+    text.className = 'modal__text';
+    text.textContent = `Вы нашли все пары за ${moves} ходов.`;
+
+    const buttons = document.createElement('div');
+    buttons.className = 'modal__buttons';
+
+    const newGameBtn = document.createElement('button');
+    newGameBtn.className = 'btn btn--modal';
+    newGameBtn.textContent = 'Новая игра';
+    newGameBtn.addEventListener('click', () => {
+        closeModal();
+        startNewGame();
+    });
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'btn btn--modal';
+    closeBtn.textContent = 'Закрыть';
+    closeBtn.addEventListener('click', closeModal);
+
+    buttons.append(newGameBtn, closeBtn);
+
+    // buttons.append(newGameBtn);
+    wrapper.append(title, text, buttons);
+    return wrapper;
+}
+
+function openLeaders() {
+    const content = buildLeadersContent();
+    openModal(content);
+}
+
+function buildLeadersContent() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'modal-leaders';
+
+    const title = document.createElement('h2');
+    title.className = 'modal__title';
+    title.textContent = 'Таблица лидеров';
+
+    const leaders = getLeaders();
+    const list = document.createElement('ol');
+    list.className = 'modal__list';
 
     if (leaders.length === 0) {
         const empty = document.createElement('li');
         empty.className = 'modal__empty';
         empty.textContent = 'Пока нет результатов';
-        leadersListEl.append(empty);
-        return;
+        list.append(empty);
+    } else {
+        leaders.forEach((item, index) => {
+            const li = document.createElement('li');
+            li.className = 'modal__item';
+            li.innerHTML = `
+                <span class="modal__rank">${index + 1}</span>
+                <span class="modal__moves">${item.moves} ходов</span>
+                <span class="modal__date">${formatDate(item.date)}</span>
+            `;
+            list.append(li);
+        });
     }
 
-    leaders.forEach((item, index) => {
-        const li = document.createElement('li');
-        li.className = 'modal__item';
-        li.innerHTML = `
-            <span class="modal__rank">${index + 1}</span>
-            <span class="modal__moves">${item.moves} ходов</span>
-            <span class="modal__date">${formatDate(item.date)}</span>
-        `;
-        leadersListEl.append(li);
-    });
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'btn btn--secondary';
+    closeBtn.textContent = 'Закрыть';
+    closeBtn.addEventListener('click', closeModal);
+
+    wrapper.append(title, list, closeBtn);
+    return wrapper;
 }
 
 function getLeaders() {
@@ -331,7 +392,10 @@ function saveLeader(moves) {
     const leaders = getLeaders();
     leaders.push({ moves, date: Date.now() });
 
-    leaders.sort((a, b) => a.moves - b.moves);
+    leaders.sort((a, b) => {
+    if (a.moves !== b.moves) return a.moves - b.moves;
+        return a.date - b.date;
+    });
 
     const top = leaders.slice(0, 10);
 
@@ -339,11 +403,11 @@ function saveLeader(moves) {
 }
 
 function formatDate(timestamp) {
-    return new Date(timestamp).toLocaleDateString('ru-RU', {
-        day: '2-digit',
-        month: '2-digit',
-        year: '2-digit',
-    });
+    const d = new Date(timestamp);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}.${month}.${year}`;
 }
 
 init();
