@@ -25,6 +25,9 @@ let movesEl;
 let matchesEl;
 let boardEl;
 
+let movesValueEl;
+let matchesValueEl;
+
 let modalEl;
 let modalBodyEl;
 
@@ -41,26 +44,32 @@ function createHeader() {
     headerEl = document.createElement('header');
     headerEl.className = 'header';
 
-    // title
     const title = document.createElement('h1');
     title.className = 'header__title';
     title.textContent = 'Memory Game';
 
-    // counters
     const stats = document.createElement('div');
     stats.className = 'header__stats';
 
+    // Ходы
     movesEl = document.createElement('span');
     movesEl.className = 'header__stat';
-    movesEl.innerHTML = 'Ходы: <b>0</b>';
+    movesEl.append('Ходы: ');
+    movesValueEl = document.createElement('b');
+    movesValueEl.textContent = '0';
+    movesEl.append(movesValueEl);
 
+    // Пары
     matchesEl = document.createElement('span');
     matchesEl.className = 'header__stat';
-    matchesEl.innerHTML = 'Пары: <b>0</b> / ' + CONFIG.pairs;
+    matchesEl.append('Пары: ');
+    matchesValueEl = document.createElement('b');
+    matchesValueEl.textContent = '0';
+    matchesEl.append(matchesValueEl);
+    matchesEl.append(` / ${CONFIG.pairs}`);
 
     stats.append(movesEl, matchesEl);
 
-    // buttons
     const buttons = document.createElement('div');
     buttons.className = 'header__buttons';
 
@@ -75,7 +84,6 @@ function createHeader() {
     leadersBtn.addEventListener('click', openLeaders);
 
     buttons.append(newGameBtn, leadersBtn);
-
     headerEl.append(title, stats, buttons);
     document.body.append(headerEl);
 }
@@ -106,7 +114,7 @@ function shuffle(arr) {
 }
 
 function renderBoard() {
-    boardEl.innerHTML = '';
+    boardEl.replaceChildren();
 
     state.cards.forEach((card, index) => {
         const cardEl = document.createElement('div');
@@ -121,20 +129,21 @@ function renderBoard() {
 
         const back = document.createElement('div');
         back.className = 'card__face card__face--back';
-        back.innerHTML = `
-            <img src="./img/question.jpg" alt="icon-back">
-        `;
+        const backImg = document.createElement('img');
+        backImg.src = './img/question.jpg';
+        backImg.alt = 'icon-back';
+        back.append(backImg);
 
         const front = document.createElement('div');
         front.className = 'card__face card__face--front';
-        front.innerHTML = `
-            <img src="./img/${card.icon}" alt="card-icon">
-        `;;
+        const frontImg = document.createElement('img');
+        frontImg.src = `./img/${card.icon}`;
+        frontImg.alt = 'card-icon';
+        front.append(frontImg);
 
         inner.append(back, front);
         cardEl.append(inner);
         cardEl.addEventListener('click', () => onCardClick(index));
-
         boardEl.append(cardEl);
     });
 }
@@ -232,8 +241,8 @@ function updateCardElement(index) {
 }
 
 function updateStats() {
-    movesEl.innerHTML = `Ходы: <b>${state.moves}</b>`;
-    matchesEl.innerHTML = `Пары: <b>${state.matches}</b> / ${CONFIG.pairs}`;
+     movesValueEl.textContent = state.moves;
+    matchesValueEl.textContent = state.matches;
 }
 
 function resetTurn() {
@@ -283,7 +292,7 @@ function createModal() {
 }
 
 function openModal(contentNode) {
-    modalBodyEl.innerHTML = '';
+    modalBodyEl.replaceChildren();
     modalBodyEl.append(contentNode);
     modalEl.hidden = false;
     document.body.classList.add('no-scroll');
@@ -361,17 +370,26 @@ function buildLeadersContent() {
         leaders.forEach((item, index) => {
             const li = document.createElement('li');
             li.className = 'modal__item';
-            li.innerHTML = `
-                <span class="modal__rank">${index + 1}</span>
-                <span class="modal__moves">${item.moves} ходов</span>
-                <span class="modal__date">${formatDate(item.date)}</span>
-            `;
+
+            const rank = document.createElement('span');
+            rank.className = 'modal__rank';
+            rank.textContent = index + 1;
+
+            const moves = document.createElement('span');
+            moves.className = 'modal__moves';
+            moves.textContent = `${item.moves} ходов`;
+
+            const date = document.createElement('span');
+            date.className = 'modal__date';
+            date.textContent = formatDate(item.date);
+
+            li.append(rank, moves, date);
             list.append(li);
         });
     }
 
     const closeBtn = document.createElement('button');
-    closeBtn.className = 'btn btn--secondary';
+    closeBtn.className = 'btn btn--modal';
     closeBtn.textContent = 'Закрыть';
     closeBtn.addEventListener('click', closeModal);
 
